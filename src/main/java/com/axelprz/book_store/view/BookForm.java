@@ -5,12 +5,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 
 @Component
 public class BookForm extends JFrame {
     private BookService bookService;
     private JPanel panel;
+    private JTable bookTable;
+    private DefaultTableModel tableModel;
 
     @Autowired
     public BookForm(BookService bookService) {
@@ -28,5 +31,29 @@ public class BookForm extends JFrame {
         int x = (screenSize.width - getWidth()) / 2;
         int y = (screenSize.height - getHeight()) / 2;
         setLocation(x, y);
+    }
+
+    private void createUIComponents() {
+        this.tableModel = new DefaultTableModel(0, 5);
+        String[] columns = {"Id", "Title", "Author", "Price", "Stock"};
+        tableModel.setColumnIdentifiers(columns);
+
+        this.bookTable = new JTable(tableModel);
+        getBooks();
+    }
+
+    private void getBooks() {
+        tableModel.setRowCount(0);
+        var books = bookService.getAllBooks();
+        books.forEach(book -> {
+            Object[] row = {
+                    book.getIdBook(),
+                    book.getTitle(),
+                    book.getAuthor(),
+                    book.getPrice(),
+                    book.getStock()
+            };
+            this.tableModel.addRow(row);
+        });
     }
 }
