@@ -13,7 +13,7 @@ import java.awt.event.MouseEvent;
 
 @Component
 public class BookForm extends JFrame {
-    private BookService bookService;
+    private final BookService bookService;
     private JPanel panel;
     private JTable bookTable;
     private JTextField txtTitle;
@@ -30,8 +30,9 @@ public class BookForm extends JFrame {
     public BookForm(BookService bookService) {
         this.bookService = bookService;
         initForm();
-        btnAdd.addActionListener(e -> addBook(null));
-        btnModify.addActionListener(e -> addBook(Integer.parseInt(txtIdBook.getText())));
+        btnAdd.addActionListener(e -> addBook());
+        btnModify.addActionListener(e -> modifyBook(txtIdBook.getText()));
+        btnDelete.addActionListener(e -> deleteBook(txtIdBook.getText()));
         bookTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -53,26 +54,60 @@ public class BookForm extends JFrame {
         setLocation(x, y);
     }
 
-    private void addBook(Integer id){
-        if(txtTitle.getText().equals("")){
-            showMessage("Provide the title of the book");
-            txtTitle.requestFocusInWindow();
-            return;
-        }
-        var title = txtTitle.getText();
-        var author = txtAuthor.getText();
-        var price = Double.parseDouble(txtPrice.getText());
-        var stock = Integer.parseInt(txtStock.getText());
+    private void addBook(){
+        if(checkFields()){
+            var title = txtTitle.getText();
+            var author = txtAuthor.getText();
+            var price = Double.parseDouble(txtPrice.getText());
+            var stock = Integer.parseInt(txtStock.getText());
 
-        var book = new Book(id, title, author, price, stock);
-        this.bookService.addBook(book);
-        if(id == null){
+            var book = new Book(null, title, author, price, stock);
+            this.bookService.addBook(book);
             showMessage("Book added");
+            clearForm();
+            getBooks();
         }else{
-            showMessage("Book updated");
+            showMessage("You must fill out all fields");
         }
-        clearForm();
-        getBooks();
+    }
+
+    private void modifyBook(String id){
+        if(!(id.isEmpty())){
+            if(checkFields()){
+                var title = txtTitle.getText();
+                var author = txtAuthor.getText();
+                var price = Double.parseDouble(txtPrice.getText());
+                var stock = Integer.parseInt(txtStock.getText());
+
+                var book = new Book(Integer.parseInt(id), title, author, price, stock);
+                this.bookService.addBook(book);
+                showMessage("Book updated");
+                clearForm();
+                getBooks();
+            }else{
+                showMessage("You must fill out all fields");
+            }
+        }else{
+            showMessage("Choose the book you want to modify from the table");
+        }
+    }
+
+    private void deleteBook(String id){
+        if(!(id.isEmpty())){
+            this.bookService.deleteBookById(Integer.parseInt(id));
+            showMessage("Book deleted");
+            clearForm();
+            getBooks();
+        }else{
+            showMessage("Choose the book you want to delete from the table");
+        }
+    }
+
+    private boolean checkFields(){
+        return !txtTitle.getText().isEmpty() &&
+                !txtAuthor.getText().isEmpty() &&
+                !txtPrice.getText().isEmpty() &&
+                !txtStock.getText().isEmpty();
     }
 
     private void loadSelectedBook(){
