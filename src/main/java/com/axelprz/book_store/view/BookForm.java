@@ -8,6 +8,8 @@ import org.springframework.stereotype.Component;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 @Component
 public class BookForm extends JFrame {
@@ -18,6 +20,7 @@ public class BookForm extends JFrame {
     private JTextField txtAuthor;
     private JTextField txtPrice;
     private JTextField txtStock;
+    private JTextField txtIdBook;
     private JButton btnAdd;
     private JButton btnModify;
     private JButton btnDelete;
@@ -27,7 +30,15 @@ public class BookForm extends JFrame {
     public BookForm(BookService bookService) {
         this.bookService = bookService;
         initForm();
-        btnAdd.addActionListener(e -> addBook());
+        btnAdd.addActionListener(e -> addBook(null));
+        btnModify.addActionListener(e -> addBook(Integer.parseInt(txtIdBook.getText())));
+        bookTable.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                super.mouseClicked(e);
+                loadSelectedBook();
+            }
+        });
     }
 
     private void initForm() {
@@ -42,7 +53,7 @@ public class BookForm extends JFrame {
         setLocation(x, y);
     }
 
-    private void addBook(){
+    private void addBook(Integer id){
         if(txtTitle.getText().equals("")){
             showMessage("Provide the title of the book");
             txtTitle.requestFocusInWindow();
@@ -53,11 +64,36 @@ public class BookForm extends JFrame {
         var price = Double.parseDouble(txtPrice.getText());
         var stock = Integer.parseInt(txtStock.getText());
 
-        var book = new Book(null, title, author, price, stock);
+        var book = new Book(id, title, author, price, stock);
         this.bookService.addBook(book);
-        showMessage("Book added");
+        if(id == null){
+            showMessage("Book added");
+        }else{
+            showMessage("Book updated");
+        }
         clearForm();
         getBooks();
+    }
+
+    private void loadSelectedBook(){
+        var row = bookTable.getSelectedRow();
+        if(row != -1){
+            String idBook =
+                    bookTable.getModel().getValueAt(row, 0).toString();
+            txtIdBook.setText(idBook);
+            String title =
+                    bookTable.getModel().getValueAt(row, 1).toString();
+            txtTitle.setText(title);
+            String author =
+                    bookTable.getModel().getValueAt(row, 2).toString();
+            txtAuthor.setText(author);
+            String price =
+                    bookTable.getModel().getValueAt(row, 3).toString();
+            txtPrice.setText(price);
+            String stock =
+                    bookTable.getModel().getValueAt(row, 4).toString();
+            txtStock.setText(stock);
+        }
     }
 
     private void clearForm() {
@@ -72,6 +108,9 @@ public class BookForm extends JFrame {
     }
 
     private void createUIComponents() {
+        txtIdBook = new JTextField("");
+        txtIdBook.setVisible(false);
+
         this.tableModel = new DefaultTableModel(0, 5);
         String[] columns = {"Id", "Title", "Author", "Price", "Stock"};
         tableModel.setColumnIdentifiers(columns);
